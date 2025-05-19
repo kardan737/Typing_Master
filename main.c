@@ -1,18 +1,25 @@
+#ifdef _WIN32
+#include <windows.h>
+#include <conio.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <windows.h>
-#include <conio.h>
 
 #include "game.h"
 #include "ui.h"
-#include "utils.h"
+#include "constants.h"
 #include "words.h"
 #include "stats.h"
+#include "platform.h"
 
 int main() {
+    platform_init();
+#ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
+#endif
 
     char mode_command[50];
     sprintf(mode_command, "mode con: cols=%d lines=%d", CONSOLE_WIDTH, CONSOLE_HEIGHT);
@@ -27,7 +34,7 @@ int main() {
 
     while (1) {
         show_menu();
-        menu_choice = _getch() - '0';
+        menu_choice = platform_get_key() - '0';
 
         switch (menu_choice) {
             case 1:
@@ -43,14 +50,16 @@ int main() {
                 break;
 
             case 4:
+                platform_cleanup();
                 return 0;
 
             default:
-                set_cursor_position(CONSOLE_WIDTH/2 - 15, 14);
+                platform_set_cursor_position(CONSOLE_WIDTH/2 - 15, 14);
                 printf("Invalid option! Press any key to continue...");
-                _getch();
+                platform_get_key();
         }
     }
 
+    platform_cleanup();
     return 0;
 }

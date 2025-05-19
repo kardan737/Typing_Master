@@ -24,18 +24,31 @@
 
 
 <a id="компиляция"></a>
-## 🔧 Компиляция
+
+## Win
+### 🔧 Компиляция
 
 ```
-gcc main.c game.c ui.c utils.c words.c stats.c -o typing_master.exe -std=c99
+gcc main.c game.c ui.c platform_win.c words.c stats.c -o typing_master.exe -std=c99
 ```
 
-## ✅ Запуск 
+### ✅ Запуск 
 
 ```
 typing_master.exe
 ```
+## Linux
+### 🔧 Компиляция
 
+```
+gcc ./main.c ./game.c ./ui.c ./platform_ncurses.c ./words.c ./stats.c -o ./typing_master -lncurses
+```
+
+### ✅ Запуск 
+
+```
+./typing_master
+```
 
 <a id="управление"></a>
 ## ✨ Управление
