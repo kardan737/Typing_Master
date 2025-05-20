@@ -3,6 +3,7 @@
 #include <conio.h>
 #else
 #include <unistd.h>
+#include <ncurses.h>
 #endif
 
 #include <stdio.h>
@@ -219,7 +220,6 @@ void run_game(Stats* stats, float word_speed, int lives) {
         #endif
     }
 
-    // Game Over screen
     platform_clear_screen();
     platform_set_color(COLOR_YELLOW);
     platform_printf("Game Over!\nFinal Score: %d\nWPM: %d\nAccuracy: %d%%\n\nPress any key to continue...", score, stats->wpm, stats->accuracy);

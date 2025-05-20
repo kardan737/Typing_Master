@@ -80,8 +80,6 @@ int main() {
 
     save_stats(&best_stats, "stats.dat");
 
-    cleanup_words();
-
     platform_cleanup();
     return 0;
 }
