@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
    
-
    
 #include "game.h"
 #include "ui.h"
@@ -18,6 +18,23 @@
 #include "words.h"
 #include "stats.h"
 #include "platform.h"
+
+
+void get_random_word_or_pair(char* buffer, size_t buffer_size, int* word_count) {
+    int choice = rand() % 5; 
+
+    if (choice == 4 && adjective_count > 0 && noun_count > 0) {
+        const char* adj = loaded_adjectives[rand() % adjective_count];
+        const char* noun = loaded_words[rand() % noun_count];
+        snprintf(buffer, buffer_size, "%s %s", adj, noun);
+        *word_count = 2;
+    } else {
+        const char* word = loaded_words[rand() % noun_count];
+        strncpy(buffer, word, buffer_size - 1);
+        buffer[buffer_size - 1] = '\0';
+        *word_count = 1;
+    }
+}
 
 void run_game(Stats* stats, float word_speed, int lives) {
     Word active_words[MAX_WORDS] = {0};
@@ -28,6 +45,14 @@ void run_game(Stats* stats, float word_speed, int lives) {
     int i;
     int input_line_y = CONSOLE_HEIGHT - 3;
     time_t game_start_time = time(NULL);
+    int words_since_speedup = 0;
+    int max_active_words = (int)(2 + word_speed * 4);
+    if (max_active_words > MAX_WORDS) max_active_words = MAX_WORDS;
+    int active_count = 0;
+    int words_generated_since_pair = 0; 
+    for (i = 0; i < MAX_WORDS; i++) {
+        if (active_words[i].active) active_count++;
+    }
 
     platform_clear_screen();
     draw_border();
@@ -65,30 +90,33 @@ void run_game(Stats* stats, float word_speed, int lives) {
         }
 
         if (word_spawn_timer <= 0) {
-            for (i = 0; i < MAX_WORDS; i++) {
-                if (!active_words[i].active) {
-                    int y, conflict, attempt = 0;
-                    do {
-                        y = rand() % (CONSOLE_HEIGHT - 4) + 1;
-                        conflict = 0;
-                        for (int k = 0; k < MAX_WORDS; k++) {
-                            if (active_words[k].active && active_words[k].y == y &&
-                                active_words[k].x < CONSOLE_WIDTH - 2) {
-                                conflict = 1;
-                                break;
+            if (active_count < max_active_words) {
+                for (i = 0; i < MAX_WORDS; i++) {
+                    if (!active_words[i].active) {
+                        int y, conflict, attempt = 0;
+                        do {
+                            y = rand() % (CONSOLE_HEIGHT - 4) + 1;
+                            conflict = 0;
+                            for (int k = 0; k < MAX_WORDS; k++) {
+                                if (active_words[k].active && active_words[k].y == y &&
+                                    active_words[k].x < CONSOLE_WIDTH - 2) {
+                                    conflict = 1;
+                                    break;
+                                }
                             }
-                        }
-                        attempt++;
-                        if (attempt > 20) break; // чтобы не зациклиться
-                    } while (conflict);
-                    strcpy(active_words[i].text, get_random_word());
-                    active_words[i].x = 1;
-                    active_words[i].prev_x = 1;
-                    active_words[i].y = y;
-                    active_words[i].active = 1;
-                    active_words[i].typed = 0;
-                    word_spawn_timer = 20;
-                    break;
+                            attempt++;
+                            if (attempt > 20) break;
+                        } while (conflict);
+                        get_random_word_or_pair(active_words[i].text, sizeof(active_words[i].text), &active_words[i].word_count);
+                        active_words[i].x = 1;
+                        active_words[i].prev_x = 1;
+                        active_words[i].y = y;
+                        active_words[i].active = 1;
+                        active_words[i].typed = 0;
+                        word_spawn_timer = (int)(BASE_SPAWN_INTERVAL / word_speed);
+                        if (word_spawn_timer < 3) word_spawn_timer = 3;
+                        break;
+                    }
                 }
             }
         }
@@ -114,33 +142,69 @@ void run_game(Stats* stats, float word_speed, int lives) {
 
         if (platform_key_pressed()) {
             char c = platform_get_key();
-            if (c == 27) break;
-            else if (c == '\b') {
-                if (input_pos > 0) input[--input_pos] = '\0';
-            } else if (c == ' ') {
+            if (c == 27) { 
+                break; 
+            } else if (c == '\b'
+#ifndef _WIN32
+                       || c == KEY_BACKSPACE
+#endif
+                      ) { 
+                if (input_pos > 0) {
+                    input[--input_pos] = '\0';
+                }
+            } else if (c == '\r' || c == '\n') { 
                 input[input_pos] = '\0';
                 int word_found = 0;
                 for (i = 0; i < MAX_WORDS; i++) {
                     if (active_words[i].active && !active_words[i].typed && strcmp(input, active_words[i].text) == 0) {
                         active_words[i].typed = 1;
-                        score++;
-                        stats->correct_words++;
+                        bool is_word_pair = (strchr(active_words[i].text, ' ') != NULL);
+                        if (is_word_pair) {
+                            score += 2;
+                            stats->correct_words += 2;
+                        } else {
+                            score++;
+                            stats->correct_words++;
+                        }
+
                         word_found = 1;
+                        words_since_speedup += (is_word_pair ? 2 : 1);
+                        if (words_since_speedup >= 5) {
+                            platform_set_cursor_position(CONSOLE_WIDTH/2 - 12, CONSOLE_HEIGHT/2);
+                            platform_set_color(COLOR_YELLOW);
+                            platform_printf("Скорость увеличится!");
+                            #ifdef _WIN32
+                            Sleep(1000);
+                            #else
+                            usleep(1000000); 
+                            #endif
+                            
+                            platform_set_cursor_position(CONSOLE_WIDTH/2 - 12, CONSOLE_HEIGHT/2);
+                            for (int k = 0; k < 25; k++) platform_printf(" "); 
+                            platform_set_color(COLOR_WHITE);
+                            word_speed += 0.1f;
+                            if (word_speed > 2.0f) word_speed = 2.0f;
+                            words_since_speedup = 0;
+                        }
                         break;
                     }
                 }
+
                 if (!word_found) {
                     platform_beep();
                     platform_flash_screen();
                 }
-                stats->total_words++;
+
+                stats->total_words += (word_found) ? (strchr(input, ' ') != NULL ? 2 : 1) : 1; 
+
                 input_pos = 0;
                 memset(input, 0, sizeof(input));
 
+                // Clear the input line
                 platform_set_cursor_position(8, input_line_y);
                 for (i = 0; i < CONSOLE_WIDTH - 9; i++) platform_printf(" ");
 
-            } else if (c >= 'a' && c <= 'z') {
+            } else if ((c >= 'a' && c <= 'z') || c == ' ') { 
                 if (input_pos < sizeof(input) - 1) {
                     input[input_pos++] = c;
                     input[input_pos] = '\0';
@@ -151,10 +215,11 @@ void run_game(Stats* stats, float word_speed, int lives) {
         #ifdef _WIN32
         Sleep(50);
         #else
-        usleep(50000);
+        usleep(50000); 
         #endif
     }
 
+    // Game Over screen
     platform_clear_screen();
     platform_set_color(COLOR_YELLOW);
     platform_printf("Game Over!\nFinal Score: %d\nWPM: %d\nAccuracy: %d%%\n\nPress any key to continue...", score, stats->wpm, stats->accuracy);

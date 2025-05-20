@@ -4,9 +4,10 @@
 #define CONSOLE_WIDTH 80
 #define CONSOLE_HEIGHT 25
 #define MAX_WORDS 10
-#define WORD_SPEED 0.5f
+#define WORD_SPEED 0.2f
 #define BEEP_FREQUENCY 750
 #define BEEP_DURATION 200
+#define BASE_SPAWN_INTERVAL 20
 
 #define COLOR_BLACK 0
 #define COLOR_WHITE 15

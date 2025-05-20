@@ -21,6 +21,9 @@ int main() {
     SetConsoleCP(CP_UTF8);
 #endif
 
+    load_words_from_file("nouns.txt");
+    load_adjectives_from_file("adjectives.txt");
+
     char mode_command[50];
     sprintf(mode_command, "mode con: cols=%d lines=%d", CONSOLE_WIDTH, CONSOLE_HEIGHT);
     system(mode_command);
@@ -28,17 +31,32 @@ int main() {
     srand(time(NULL));
 
     Stats stats = {0};
+    Stats best_stats = {0};
     float word_speed = WORD_SPEED;
     int lives = 3;
     int menu_choice = 0;
 
+    load_stats(&best_stats, "stats.dat");
+
     while (1) {
         show_menu();
-        menu_choice = platform_get_key() - '0';
+        int key = platform_get_key();
+        if (key == 27) { 
+            break;
+        }
+        menu_choice = key - '0';
 
         switch (menu_choice) {
             case 1:
+                stats.total_words = 0;
+                stats.correct_words = 0;
+                stats.wpm = 0;
+                stats.accuracy = 0;
+                stats.start_speed = word_speed;
                 run_game(&stats, word_speed, lives);
+                if (stats.correct_words > best_stats.correct_words) {
+                    best_stats = stats;
+                }
                 break;
 
             case 2:
@@ -46,19 +64,23 @@ int main() {
                 break;
 
             case 3:
-                show_statistics(stats);
+                show_statistics(stats, best_stats);
                 break;
 
             case 4:
-                platform_cleanup();
-                return 0;
+                break;
 
             default:
                 platform_set_cursor_position(CONSOLE_WIDTH/2 - 15, 14);
                 printf("Invalid option! Press any key to continue...");
                 platform_get_key();
         }
+        if (menu_choice == 4) break;
     }
+
+    save_stats(&best_stats, "stats.dat");
+
+    cleanup_words();
 
     platform_cleanup();
     return 0;

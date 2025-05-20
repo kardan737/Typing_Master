@@ -71,14 +71,16 @@ void show_settings_menu(float* word_speed, int* lives) {
         platform_set_color(COLOR_YELLOW);
         platform_printf("Select option: ");
 
-        int choice = platform_get_key() - '0';
+        int choice = platform_get_key();
+        if (choice == 27) return; 
+        choice -= '0';
         switch (choice) {
             case 1:
                 platform_set_cursor_position(CONSOLE_WIDTH/2 - 20, 14);
-                platform_printf("Enter new word speed (0.1-2.0): ");
+                platform_printf("Enter new word speed (0.1-1.0): ");
                 float new_speed;
                 scanf("%f", &new_speed);
-                if (new_speed >= 0.1f && new_speed <= 2.0f) *word_speed = new_speed;
+                if (new_speed >= 0.1f && new_speed <= 1.0f) *word_speed = new_speed;
                 getchar();
                 break;
             case 2:
@@ -99,7 +101,7 @@ void show_settings_menu(float* word_speed, int* lives) {
     }
 }
 
-void show_statistics(Stats stats) {
+void show_statistics(Stats stats, Stats best_stats) {
     while (1) {
         platform_clear_screen();
         draw_border();
@@ -108,17 +110,35 @@ void show_statistics(Stats stats) {
         platform_set_color(COLOR_CYAN);
         platform_printf("STATISTICS");
 
-        platform_set_cursor_position(CONSOLE_WIDTH/2 - 12, 8);
+        
+        platform_set_cursor_position(CONSOLE_WIDTH/2 - 25, 8); 
         platform_set_color(COLOR_WHITE);
-        platform_printf("Total words: %d", stats.total_words);
+        platform_printf("--- Current Game ---");
 
-        platform_set_cursor_position(CONSOLE_WIDTH/2 - 12, 9);
-        platform_printf("Correct: %d", stats.correct_words);
+        platform_set_cursor_position(CONSOLE_WIDTH/2 - 25, 10);
+        platform_printf("Correct words: %d", stats.correct_words);
 
-        platform_set_cursor_position(CONSOLE_WIDTH/2 - 12, 10);
-        platform_printf("Accuracy: %d%%", stats.total_words > 0 ? (stats.correct_words * 100) / stats.total_words : 0);
+        platform_set_cursor_position(CONSOLE_WIDTH/2 - 25, 11);
+        platform_printf("Start speed: %.1f", stats.start_speed);
 
-        platform_set_cursor_position(CONSOLE_WIDTH/2 - 15, 12);
+        platform_set_cursor_position(CONSOLE_WIDTH/2 - 25, 12);
+        platform_printf("WPM: %d", stats.wpm);
+
+        
+        platform_set_cursor_position(CONSOLE_WIDTH/2 + 5, 8); 
+        platform_set_color(COLOR_YELLOW);
+        platform_printf("--- Best Result ---\n");
+
+        platform_set_cursor_position(CONSOLE_WIDTH/2 + 5, 10);
+        platform_printf("Correct words: %d", best_stats.correct_words);
+
+        platform_set_cursor_position(CONSOLE_WIDTH/2 + 5, 11);
+        platform_printf("Start speed: %.1f", best_stats.start_speed);
+
+        platform_set_cursor_position(CONSOLE_WIDTH/2 + 5, 12);
+        platform_printf("WPM: %d", best_stats.wpm);
+
+        platform_set_cursor_position(CONSOLE_WIDTH/2 - 15, 15); 
         platform_set_color(COLOR_YELLOW);
         platform_printf("Press ESC to return to main menu...");
 
