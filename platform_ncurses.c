@@ -2,6 +2,7 @@
 #include <ncurses.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 static int color_pairs_initialized = 0;
 
@@ -70,7 +71,12 @@ void platform_clear_screen() {
 
 int platform_get_key() {
     nodelay(stdscr, FALSE);
-    return getch();
+    int ch = getch();
+
+    if (ch == KEY_BACKSPACE) {
+        return '\b';
+    }
+    return ch;
 }
 
 int platform_key_pressed() {

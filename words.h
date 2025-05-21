@@ -13,6 +13,7 @@ typedef struct {
     int typed;
     float prev_x;
     int word_count;
+    int direction; // 1 for left-to-right, -1 for right-to-left
 } Word;
 
 const char* get_random_word();

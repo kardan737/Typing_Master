@@ -48,7 +48,7 @@ void show_menu() {
     platform_printf("Select menu item: ");
 }
 
-void show_settings_menu(float* word_speed, int* lives) {
+void show_settings_menu(float* word_speed, int* lives, int* word_direction_mode) {
     while (1) {
         platform_clear_screen();
         draw_border();
@@ -65,7 +65,10 @@ void show_settings_menu(float* word_speed, int* lives) {
         platform_printf("2. Lives count (current: %d)", *lives);
 
         platform_set_cursor_position(CONSOLE_WIDTH/2 - 12, 10);
-        platform_printf("3. Back to main menu");
+        platform_printf("3. Word direction (current: %s)", (*word_direction_mode == 0) ? "Mixed" : ((*word_direction_mode == 1) ? "Left-to-right" : "Right-to-left"));
+
+        platform_set_cursor_position(CONSOLE_WIDTH/2 - 12, 11);
+        platform_printf("4. Back to main menu");
 
         platform_set_cursor_position(CONSOLE_WIDTH/2 - 10, 12);
         platform_set_color(COLOR_YELLOW);
@@ -92,6 +95,14 @@ void show_settings_menu(float* word_speed, int* lives) {
                 getchar();
                 break;
             case 3:
+                platform_set_cursor_position(CONSOLE_WIDTH/2 - 20, 14);
+                platform_printf("Enter direction mode (0: Mixed, 1: LTR, -1: RTL): ");
+                int new_direction;
+                scanf("%d", &new_direction);
+                if (new_direction >= -1 && new_direction <= 1) *word_direction_mode = new_direction;
+                getchar(); // Consume newline
+                break;
+            case 4:
                 return;
             default:
                 platform_set_cursor_position(CONSOLE_WIDTH/2 - 15, 14);

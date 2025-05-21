@@ -3,7 +3,7 @@
 #include <conio.h>
 #else
 #include <unistd.h>
-#include <ncurses.h>
+//#include <ncurses.h>
 #endif
 
 #include <stdio.h>
@@ -37,7 +37,7 @@ void get_random_word_or_pair(char* buffer, size_t buffer_size, int* word_count) 
     }
 }
 
-void run_game(Stats* stats, float word_speed, int lives) {
+void run_game(Stats* stats, float word_speed, int lives, int word_direction_mode) {
     Word active_words[MAX_WORDS] = {0};
     int score = 0;
     int word_spawn_timer = 0;
@@ -61,19 +61,30 @@ void run_game(Stats* stats, float word_speed, int lives) {
     while (lives > 0) {
         for (i = 0; i < MAX_WORDS; i++) {
             if (active_words[i].active) {
-                platform_set_cursor_position((int)active_words[i].prev_x, active_words[i].y);
-                platform_printf(" ");
+                int clear_start_x = (int)active_words[i].prev_x;
+                int clear_end_x = clear_start_x + strlen(active_words[i].text);
+                int clear_y = active_words[i].y;
+
+                if (clear_start_x < 1) clear_start_x = 1;
+                if (clear_end_x > CONSOLE_WIDTH - 1) clear_end_x = CONSOLE_WIDTH - 1; 
+                
+                if (clear_start_x < clear_end_x) {
+                    platform_set_cursor_position(clear_start_x, clear_y);
+                    for (int j = 0; j < clear_end_x - clear_start_x; j++) {
+                        platform_printf(" ");
+                    }
+                }
             }
         }
 
         for (i = 0; i < MAX_WORDS; i++) {
             if (active_words[i].active) {
                 active_words[i].prev_x = active_words[i].x;
-                active_words[i].x += word_speed;
+                active_words[i].x += word_speed * active_words[i].direction;
 
-                if (active_words[i].x >= CONSOLE_WIDTH - strlen(active_words[i].text) - 1) {
-                // Очистить слово с экрана
-                    platform_set_cursor_position((int)active_words[i].x, active_words[i].y);
+                if ((active_words[i].direction == 1 && active_words[i].x >= CONSOLE_WIDTH - strlen(active_words[i].text) - 1) ||
+                    (active_words[i].direction == -1 && active_words[i].x < 1)) {
+                    platform_set_cursor_position((int)active_words[i].prev_x, active_words[i].y);
                     for (int j = 0; j < strlen(active_words[i].text); j++) {
                         platform_printf(" ");
                     }
@@ -109,8 +120,17 @@ void run_game(Stats* stats, float word_speed, int lives) {
                             if (attempt > 20) break;
                         } while (conflict);
                         get_random_word_or_pair(active_words[i].text, sizeof(active_words[i].text), &active_words[i].word_count);
-                        active_words[i].x = 1;
-                        active_words[i].prev_x = 1;
+                        if (word_direction_mode == 0) {
+                            active_words[i].direction = (rand() % 2 == 0) ? 1 : -1;
+                        } else {
+                            active_words[i].direction = word_direction_mode;
+                        }
+                        if (active_words[i].direction == 1) {
+                            active_words[i].x = 1;
+                        } else {
+                            active_words[i].x = CONSOLE_WIDTH - strlen(active_words[i].text) - 1;
+                        }
+                        active_words[i].prev_x = active_words[i].x;
                         active_words[i].y = y;
                         active_words[i].active = 1;
                         active_words[i].typed = 0;
@@ -145,11 +165,7 @@ void run_game(Stats* stats, float word_speed, int lives) {
             char c = platform_get_key();
             if (c == 27) { 
                 break; 
-            } else if (c == '\b'
-#ifndef _WIN32
-                       || c == KEY_BACKSPACE
-#endif
-                      ) { 
+            } else if (c == '\b') { 
                 if (input_pos > 0) {
                     input[--input_pos] = '\0';
                 }
@@ -201,7 +217,6 @@ void run_game(Stats* stats, float word_speed, int lives) {
                 input_pos = 0;
                 memset(input, 0, sizeof(input));
 
-                // Clear the input line
                 platform_set_cursor_position(8, input_line_y);
                 for (i = 0; i < CONSOLE_WIDTH - 9; i++) platform_printf(" ");
 

@@ -35,6 +35,7 @@ int main() {
     float word_speed = WORD_SPEED;
     int lives = 3;
     int menu_choice = 0;
+    int word_direction_mode = 0; // 0: Mixed, 1: LTR, -1: RTL
 
     load_stats(&best_stats, "stats.dat");
 
@@ -53,14 +54,14 @@ int main() {
                 stats.wpm = 0;
                 stats.accuracy = 0;
                 stats.start_speed = word_speed;
-                run_game(&stats, word_speed, lives);
+                run_game(&stats, word_speed, lives, word_direction_mode);
                 if (stats.correct_words > best_stats.correct_words) {
                     best_stats = stats;
                 }
                 break;
 
             case 2:
-                show_settings_menu(&word_speed, &lives);
+                show_settings_menu(&word_speed, &lives, &word_direction_mode);
                 break;
 
             case 3:
