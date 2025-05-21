@@ -189,7 +189,7 @@ void run_game(Stats* stats, float word_speed, int lives, int word_direction_mode
                         if (words_since_speedup >= 5) {
                             platform_set_cursor_position(CONSOLE_WIDTH/2 - 12, CONSOLE_HEIGHT/2);
                             platform_set_color(COLOR_YELLOW);
-                            platform_printf("Скорость увеличится!");
+                            platform_printf("The speed is increasing!");
                             #ifdef _WIN32
                             Sleep(1000);
                             #else
