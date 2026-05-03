@@ -7,7 +7,7 @@ ifeq ($(OS), Linux)
 	LIBS+=-lncurses
 else
 	OBJS += platform_win.o
-	CFLAGS=-stdс=99
+	CFLAGS=-std=c99
 	EXE = typing_master.exe
 endif
 
