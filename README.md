@@ -29,7 +29,7 @@
 ### 🔧 Компиляция
 
 ```
-gcc main.c game.c ui.c platform_win.c words.c stats.c -o typing_master.exe -std=c99
+make
 ```
 
 ### ✅ Запуск 
@@ -41,7 +41,7 @@ typing_master.exe
 ### 🔧 Компиляция
 
 ```
-gcc ./main.c ./game.c ./ui.c ./platform_ncurses.c ./words.c ./stats.c -o ./typing_master -lncurses
+make
 ```
 
 ### ✅ Запуск 
